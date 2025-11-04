@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extensions List</title>
+    <script
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.0/dist/cdn.min.js"
+      defer
+    ></script>
+    <style></style>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body x-data="extensionApp" x-init="loadExtensions()">
+    <header x-data="themeToggle" x-init="initTheme()">
+      <h1>
+        <img src="./assets/images/logo.svg" alt="Extension Manager Logo" />
+      </h1>
+      <button
+        class="theme-toggle"
+        @click="toggleTheme()"
+        :aria-pressed="theme === 'dark'"
+        :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        <img
+          :src="theme === 'dark' ? './assets/images/icon-sun.svg' : './assets/images/icon-moon.svg'"
+          alt=""
+        />
+      </button>
+    </header>
+
+    <main>
+      <section aria-labelledby="extensions-title">
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Search extensions..."
+            x-model="searchQuery"
+            aria-label="Search extensions"
+          />
+          <div class="extension-list">
+            <h2 class="extenson-list__title">Extension List</h2>
+
+            <div
+              class="filter-buttons"
+              role="tablist"
+              aria-label="Filter extensions"
+            >
+              <button :class="{'active': filter==='all'}" @click="filter='all'">
+                All
+              </button>
+              <button
+                :class="{'active': filter==='active'}"
+                @click="filter='active'"
+              >
+                Active
+              </button>
+              <button
+                :class="{'active': filter==='inactive'}"
+                @click="filter='inactive'"
+              >
+                Inactive
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid" role="list">
+          <template x-for="ext in filteredExtensions" :key="ext.name">
+            <article role="listitem">
+              <div class="card__content">
+                <img :src="ext.logo" :alt="ext.name + ' Logo'" />
+                <div>
+                  <div class="ext-header">
+                    <h2 class="ext-name" x-text="ext.name"></h2>
+                  </div>
+                  <p class="ext-desc" x-text="ext.description"></p>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="remove-btn" @click="removeExtension(ext)">
+                  Remove
+                </button>
+                <div
+                  class="toggle"
+                  :class="{'on': ext.isActive}"
+                  role="switch"
+                  :aria-checked="ext.isActive"
+                  tabindex="0"
+                  @click="toggle(ext)"
+                  @keyup.enter="toggle(ext)"
+                ></div>
+              </div>
+            </article>
+          </template>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("extensionApp", () => ({
+          searchQuery: "",
+          extension: [],
+          filter: "all",
+          async loadExtensions() {
+            try {
+              const res = await fetch("./data.json");
+              this.extensions = await res.json();
+            } catch (err) {
+              console.error("Error loading JSON:", err);
+            }
+          },
+
+          get filteredExtensions() {
+            return this.extensions
+              .filter((ext) =>
+                ext.name
+                  .toLowerCase()
+                  .startsWith(this.searchQuery.toLowerCase())
+              )
+              .filter((ext) => {
+                if (this.filter === "active") return ext.isActive;
+                if (this.filter === "inactive") return !ext.isActive;
+                return true;
+              });
+          },
+          toggle(ext) {
+            ext.isActive = !ext.isActive;
+          },
+          removeExtension(ext) {
+            this.extensions = this.extensions.filter((e) => e !== ext);
+          },
+        }));
+        Alpine.data("themeToggle", () => ({
+          theme: "light",
+
+          initTheme() {
+            const stored = localStorage.getItem("theme");
+            // Default to user's system preference if no stored value
+            if (stored) {
+              this.theme = stored;
+            } else {
+              this.theme = window.matchMedia("(prefers-color-scheme: dark)")
+                .matches
+                ? "dark"
+                : "light";
+            }
+            document.documentElement.setAttribute("data-theme", this.theme);
+          },
+
+          toggleTheme() {
+            this.theme = this.theme === "light" ? "dark" : "light";
+            document.documentElement.setAttribute("data-theme", this.theme);
+            localStorage.setItem("theme", this.theme);
+          },
+        }));
+      });
+    </script>
+  </body>
+</html>
