@@ -4,17 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extensions List</title>
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.0/dist/cdn.min.js"
-      defer
-    ></script>
-    <style></style>
-    <link rel="stylesheet" href="./style.css" />
+    <script src="./scripts/alpine.min.js" defer></script>
+    <link rel="stylesheet" href="./css/open-props.min.css" />
+    <link rel="stylesheet" href="./css/style.css" />
   </head>
   <body x-data="extensionApp" x-init="loadExtensions()">
     <header x-data="themeToggle" x-init="initTheme()">
       <h1>
-        <img src="./assets/images/logo.svg" alt="Extension Manager Logo" />
+        <img
+          x-show="theme === 'light'"
+          src="./assets/images/logo.svg"
+          alt="Extension Manager Logo"
+        />
+        <img
+          x-show="theme === 'dark'"
+          src="./assets/images/logo-dark.svg"
+          alt="Extension Manager Logo"
+        />
       </h1>
       <button
         class="theme-toggle"
@@ -117,7 +123,7 @@
               .filter((ext) =>
                 ext.name
                   .toLowerCase()
-                  .startsWith(this.searchQuery.toLowerCase())
+                  .startsWith(this.searchQuery.toLowerCase().trim())
               )
               .filter((ext) => {
                 if (this.filter === "active") return ext.isActive;
@@ -137,7 +143,7 @@
 
           initTheme() {
             const stored = localStorage.getItem("theme");
-            // Default to user's system preference if no stored value
+
             if (stored) {
               this.theme = stored;
             } else {
